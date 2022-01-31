@@ -1,13 +1,19 @@
+const scoreSpan = document.querySelector("#score");
+
 let planes = [];
 let airports = [];
 
+let heli, heliWing, helipad;
 let img1, img2, img3, img4, img5, img6;
 let img1Gray, img2Gray, img3Gray, img4Gray, img5Gray, img6Gray;
 
-const WALL_DISTANCE = 20; //distance from window boundary to make plane comeback to window
-const SMOOTH_FACTOR = 2; //to smooth the path
+let speedFactor = 1;
+let score = 0;
+let isPaused = false;
+const WALL_DISTANCE = 30; //distance from window boundary to make plane comeback to window
+const SMOOTH_FACTOR = 4; //to smooth the path
 
-const COLORS = ["#FFDD09", "#62FCB1", "#F23557"];
+const COLORS = ["#FFDD09", "#62FCB1", "#F23557", "#ffffff"];
 
 function findProjection(pos, a, b) {
 	let v1 = p5.Vector.sub(a, pos);
@@ -18,6 +24,21 @@ function findProjection(pos, a, b) {
 	v2.add(pos);
 	return v2;
 }
+
+const PLANE_TYPES = [
+	{
+		speed: 1,
+		radius: 35,
+	},
+	{
+		speed: 0.75,
+		radius: 30,
+	},
+	{
+		speed: 0.5,
+		radius: 25,
+	},
+];
 
 class Airport {
 	constructor(
@@ -34,15 +55,21 @@ class Airport {
 			{ color: img4, gray: img4Gray },
 			{ color: img5, gray: img5Gray },
 			{ color: img6, gray: img6Gray },
-		]
+		],
+		isHelipad = false
 	) {
 		this.pos = createVector(x, y);
+		this.isHelipad = isHelipad;
+		this.width = w;
+		if (this.isHelipad) {
+			this.width = h * 1.2;
+		}
+		this.height = h * 1.2;
 		this.runway = p5.Vector.add(
 			createVector(x, y),
-			createVector(w, 0).setHeading(radians(angle))
+			createVector(this.width, 0).setHeading(radians(angle))
 		);
-		this.width = w;
-		this.height = h;
+
 		this.angle = angle;
 		this.color = color;
 		this.supportedPlanes = planes;
@@ -52,15 +79,72 @@ class Airport {
 		push();
 		translate(this.pos.x, this.pos.y);
 		rotate(this.angle);
-		fill("gray");
-		noStroke();
-		rectMode(CENTER);
-		rect(this.width / 2 - this.height / 2, 0, this.width, this.height);
-		fill(this.color);
-		rect(0, 0, this.height, this.height);
-		stroke(0, 40);
-		strokeWeight(4);
-		line(0, 0, this.width - this.height, 0);
+
+		if (!this.isHelipad) {
+			fill("gray");
+			noStroke();
+			rectMode(CENTER);
+			rect(this.width / 2 - this.height / 2, 0, this.width, this.height, 8);
+			fill(this.color + "d9");
+			rect(0, 0, this.height, this.height, 8, 0, 0, 8);
+			fill(0, 101);
+			triangle(0, 0, -6, -this.height / 2 + 5, -6, this.height / 2 - 5);
+			triangle(6, 0, 1, -this.height / 2 + 5, 1, this.height / 2 - 5);
+			triangle(12, 0, 7, -this.height / 2 + 5, 7, this.height / 2 - 5);
+			stroke(this.color + "88");
+			strokeWeight(4);
+			line(0, this.height / 2 - 4, this.width - 22, this.height / 2 - 4);
+			line(0, -this.height / 2 + 4, this.width - 22, -this.height / 2 + 4);
+			stroke(0, 20);
+			line(22, 0, this.width - 52, 0);
+		} else {
+			rectMode(CENTER);
+			fill(255);
+			rect(0, 0, this.width * 1.2, this.height * 1.2, 8);
+			imageMode(CENTER);
+			image(helipad, 0, 0, this.width, this.height);
+		}
+		pop();
+	}
+
+	drawRunway() {
+		push();
+		translate(this.pos.x, this.pos.y);
+		rotate(this.angle);
+
+		if (!this.isHelipad) {
+			fill("gray");
+			noStroke();
+			rectMode(CENTER);
+			rect(this.width / 2 - this.height / 2, 0, this.width, this.height, 8);
+			fill(this.color + "d9");
+			rect(0, 0, this.height, this.height, 8, 0, 0, 8);
+		} else {
+			rectMode(CENTER);
+			fill(255);
+			rect(0, 0, this.width * 1.2, this.height * 1.2, 8);
+			imageMode(CENTER);
+			image(helipad, 0, 0, this.width, this.height);
+		}
+		pop();
+	}
+	drawRunwayMarkings() {
+		push();
+		translate(this.pos.x, this.pos.y);
+		rotate(this.angle);
+		if (!this.isHelipad) {
+			noStroke();
+			fill(0, 101);
+			triangle(0, 0, -6, -this.height / 2 + 5, -6, this.height / 2 - 5);
+			triangle(6, 0, 1, -this.height / 2 + 5, 1, this.height / 2 - 5);
+			triangle(12, 0, 7, -this.height / 2 + 5, 7, this.height / 2 - 5);
+			stroke(this.color + "88");
+			strokeWeight(4);
+			line(18, this.height / 2 - 4, this.width - 22, this.height / 2 - 4);
+			line(18, -this.height / 2 + 4, this.width - 22, -this.height / 2 + 4);
+			stroke(0, 20);
+			line(22, 0, this.width - 52, 0);
+		}
 		pop();
 	}
 }
@@ -78,7 +162,12 @@ class Plane {
 		this.airport = airport;
 		this.isMakingPath = false;
 		this.isHavePathToAirport = false;
-		this.path = [createVector(random(width), random(height))];
+		this.path = [
+			createVector(
+				random(width / 3, (2 * width) / 3),
+				random(height / 3, (2 * height) / 3)
+			),
+		];
 		this.smoothenPath = [this.path[0].copy()];
 		this.pathIndex = 0;
 		this.isInDanger = false;
@@ -99,17 +188,23 @@ class Plane {
 	seek(target, arrival = false) {
 		let force = p5.Vector.sub(target, this.pos);
 
-		let desiredSpeed = this.maxSpeed;
+		let desiredSpeed = this.maxSpeed * speedFactor;
 		if (arrival) {
 			let distance = force.mag();
 			let slowRadius = 100;
 			if (distance < slowRadius) {
-				desiredSpeed = map(distance, 0, slowRadius, 0, this.maxSpeed);
+				desiredSpeed = map(
+					distance,
+					0,
+					slowRadius,
+					0,
+					this.maxSpeed * speedFactor
+				);
 			}
 		}
 		force.setMag(desiredSpeed);
 		force.sub(this.vel);
-		force.limit(this.maxForce);
+		force.limit(this.maxForce * speedFactor);
 		return force;
 	}
 
@@ -166,7 +261,7 @@ class Plane {
 			}
 		}
 		this.vel.add(this.acc);
-		this.vel.limit(this.maxSpeed);
+		this.vel.limit(this.maxSpeed * speedFactor);
 		this.pos.add(this.vel);
 		this.acc.set(0, 0);
 
@@ -174,21 +269,32 @@ class Plane {
 			this.smoothenPath = [];
 			this.pathIndex = 0;
 			this.smoothenPath.push(this.airport.runway);
-			this.radius -= 0.2;
+			this.radius -= this.airport.isHelipad ? 2 : 0.3;
 		}
 	}
 
 	isCollidingWith(planeB) {
 		let d = p5.Vector.dist(this.pos, planeB.pos);
-		if (d <= this.radius + planeB.radius + 10) {
+		if (d <= this.radius + planeB.radius + 30) {
 			this.isInDanger = true;
 			return false;
 		}
 	}
 
 	isCollided(planeB) {
+		if (this.isLanding || planeB.isLanding) return false;
+		if (
+			this.pos.x < WALL_DISTANCE ||
+			this.pos.x > width - WALL_DISTANCE ||
+			this.pos.y < WALL_DISTANCE ||
+			this.pos.y > height - WALL_DISTANCE
+		) {
+			//means colliding outside the window
+			//so don't game over
+			return false;
+		}
 		let d = p5.Vector.dist(this.pos, planeB.pos);
-		return d <= max(this.radius, planeB.radius) - 4;
+		return d <= max(this.radius, planeB.radius);
 	}
 
 	edge() {
@@ -208,9 +314,9 @@ class Plane {
 
 		if (desired && this.smoothenPath.length === 0) {
 			desired.normalize();
-			desired.mult(this.maxSpeed);
+			desired.mult(this.maxSpeed * speedFactor);
 			let steer = p5.Vector.sub(desired, this.vel);
-			steer.limit(this.maxForce);
+			steer.limit(this.maxForce * speedFactor);
 			this.applyForce(steer);
 		}
 	}
@@ -228,10 +334,19 @@ class Plane {
 		rotate(90 + this.vel.heading());
 		ellipse(0, 0, this.radius * 2.2, this.radius * 2.2);
 		imageMode(CENTER);
-		if (this.isHavePathToAirport) {
-			image(this.imgs.gray, 0, 0, this.radius * 1.8, this.radius * 1.8);
+
+		if (this.imgs.heli) {
+			image(this.imgs.heli, 0, 0, this.radius * 1.8, this.radius * 1.8);
+			push();
+			rotate(frameCount * 10);
+			image(this.imgs.wing, 0, 0, this.radius * 1.8, this.radius * 1.8);
+			pop();
 		} else {
-			image(this.imgs.color, 0, 0, this.radius * 1.8, this.radius * 1.8);
+			if (this.isHavePathToAirport) {
+				image(this.imgs.gray, 0, 0, this.radius * 1.8, this.radius * 1.8);
+			} else {
+				image(this.imgs.color, 0, 0, this.radius * 1.8, this.radius * 1.8);
+			}
 		}
 
 		pop();
@@ -246,6 +361,20 @@ class Plane {
 		}
 		endShape();
 	}
+
+	startedMakingPath(point) {
+		this.isMakingPath = true;
+		this.path = [];
+		this.pathIndex = 0;
+		this.path.push(point);
+	}
+	continueMakingPath(point) {
+		this.path.push(point);
+		this.smoothDirection();
+	}
+	stopMakingPath() {
+		this.isMakingPath = false;
+	}
 }
 
 function averageVector(arr) {
@@ -259,6 +388,9 @@ function averageVector(arr) {
 
 /////////////////////////////////////////////////////////////////////////////////
 function preload() {
+	helipad = loadImage("./helipad.jpg");
+	heli = loadImage("./helicopter.png");
+	heliWing = loadImage("./helicopter_wings.png");
 	img1 = loadImage("./plane-yellow.svg");
 	img1Gray = loadImage("./plane-yellow.svg");
 	img2 = loadImage("./super-plane-yellow.svg");
@@ -278,10 +410,11 @@ function preload() {
 }
 
 /////////////////////////////////////////////////////////////////////////////////
+let canvas;
 function setup() {
-	createCanvas(windowWidth, windowHeight);
+	canvas = createCanvas(windowWidth - 100, windowHeight - 120);
 	angleMode(DEGREES);
-
+	frameRate(60);
 	img1Gray.filter(GRAY);
 	img2Gray.filter(GRAY);
 	img3Gray.filter(GRAY);
@@ -301,28 +434,32 @@ function setup() {
 			{ color: img5, gray: img5Gray },
 			{ color: img6, gray: img6Gray },
 		],
+		[{ heli: heli, wing: heliWing }],
 	];
-	for (let i = 0; i < 3; i++) {
+	for (let i = 0; i < 4; i++) {
 		airports.push(
 			new Airport(
 				random(width / 3, (2 * width) / 3),
 				random(height / 3, (2 * height) / 3),
-				random(150, 300),
-				random(25, 35),
+				random(200, 300),
+				30,
 				random(0, 180),
 				COLORS[i],
-				SUPPORTED_PLANES[i]
+				SUPPORTED_PLANES[i],
+				i === 3
 			)
 		);
 	}
 
-	for (let i = 0; i < 5; i++) {
+	for (let i = 0; i < 1; i++) {
+		let p = random(PLANE_TYPES);
+
 		planes.push(
 			new Plane(
 				random([random(-width / 2, 0), random(width, 1.5 * width)]),
 				random([random(-height / 2, 0), random(height, 1.5 * height)]),
-				random(0.3, 1.5),
-				random(15, 35),
+				p.speed, // random(0.3, 1.5),
+				p.radius, //random(15, 35),
 				random(airports)
 			)
 		);
@@ -331,15 +468,22 @@ function setup() {
 /////////////////////////////////////////////////////////////////////////////////
 
 function draw() {
-	background("#A8DDA8"); //white background
-
+	// background("#A8DDA8"); //white background
+	canvas.clear();
 	for (let airport of airports) {
-		airport.draw();
+		airport.drawRunway();
+	}
+	//making separate loop for airports because not want to overlap the runway marking with other runway
+	for (let airport of airports) {
+		airport.drawRunwayMarkings();
 	}
 	for (let plane of planes) {
 		plane.drawPath();
 		plane.draw();
 		plane.update();
+		if (speedFactor === 2) {
+			plane.update();
+		}
 		plane.checkForLanding();
 		plane.edge();
 	}
@@ -347,6 +491,8 @@ function draw() {
 	for (let i = planes.length - 1; i >= 0; i--) {
 		if (planes[i].isLanded) {
 			planes.splice(i, 1);
+			score++;
+			scoreSpan.innerHTML = score;
 		}
 	}
 
@@ -364,6 +510,8 @@ function draw() {
 			if (planeA !== planeB) {
 				if (planeA.isCollided(planeB)) {
 					console.log("Game Over");
+					gameOverWindow.style.display = "flex";
+
 					noLoop();
 					break;
 				}
@@ -371,14 +519,15 @@ function draw() {
 		}
 	}
 
-	if (frameCount % 500 == 0) {
+	if (frameCount % 200 == 0) {
 		console.log("added");
+		let p = random(PLANE_TYPES);
 		planes.push(
 			new Plane(
 				random([random(-width / 2, 0), random(width, 1.5 * width)]),
 				random([random(-height / 2, 0), random(height, 1.5 * height)]),
-				random(0.3, 1.5),
-				random(15, 35),
+				p.speed, // random(0.3, 1.5),
+				p.radius, //random(15, 35),
 				random(airports)
 			)
 		);
@@ -388,11 +537,8 @@ function draw() {
 function mousePressed() {
 	for (let plane of planes) {
 		let d = dist(mouseX, mouseY, plane.pos.x, plane.pos.y);
-		if (d < plane.radius) {
-			plane.isMakingPath = true;
-			plane.path = [];
-			plane.pathIndex = 0;
-			plane.path.push(createVector(mouseX, mouseY));
+		if (d < plane.radius * 1.2) {
+			plane.startedMakingPath(createVector(mouseX, mouseY));
 		}
 	}
 }
@@ -406,8 +552,7 @@ function mouseDragged() {
 				mouseY > WALL_DISTANCE &&
 				mouseY < height - WALL_DISTANCE
 			) {
-				plane.path.push(createVector(mouseX, mouseY));
-				plane.smoothDirection();
+				plane.continueMakingPath(createVector(mouseX, mouseY));
 			}
 		}
 	}
@@ -415,6 +560,46 @@ function mouseDragged() {
 
 function mouseReleased() {
 	for (let plane of planes) {
-		plane.isMakingPath = false;
+		plane.stopMakingPath();
 	}
 }
+
+function togglePause() {
+	if (isPaused) {
+		loop();
+	} else {
+		noLoop();
+	}
+	isPaused = !isPaused;
+}
+
+const gameOverWindow = document.querySelector(".gameOverWindow");
+
+gameOverWindow.style.display = "none";
+
+const speedButton = document.querySelector("#speedButton");
+speedButton.addEventListener("click", (e) => {
+	speedFactor = speedFactor === 1 ? 2 : 1;
+	speedButton.innerHTML =
+		speedFactor === 1
+			? `<svg	xmlns="http://www.w3.org/2000/svg" width="40px"	height="40px"	stroke-width="4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path	stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>`
+			: `<svg xmlns="http://www.w3.org/2000/svg" width="40px"	height="40px"	stroke-width="4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>`;
+});
+
+const pauseButton = document.querySelector("#pauseButton");
+pauseButton.addEventListener("click", (e) => {
+	if (isPaused) {
+		loop();
+	} else {
+		noLoop();
+	}
+	isPaused = !isPaused;
+	pauseButton.innerHTML = isPaused
+		? `<svg xmlns="http://www.w3.org/2000/svg" width="45px"	height="45px"	fill="none" viewBox="0 0 24 24" stroke="currentColor">
+		<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+		<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+	</svg>`
+		: `<svg xmlns="http://www.w3.org/2000/svg" width="45px"	height="45px"	fill="none" viewBox="0 0 24 24" stroke="currentColor">
+		<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+	</svg>`;
+});

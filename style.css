@@ -3,7 +3,66 @@ body {
 	margin: 0;
 	padding: 0;
 	background: rgb(0, 0, 0);
+	overscroll-behavior-y: none;
 }
 canvas {
 	display: block;
+	margin: 50px;
+	border-radius: 2rem;
+	background: url("./Assets/tile_05.png");
+	background-size: 50px;
+}
+
+.button {
+	display: block;
+	background: none;
+	padding: 6px 18px;
+	border: none;
+	outline: none;
+	color: white;
+	border-radius: 1000px;
+}
+.score {
+	color: white;
+	width: 100%;
+	position: absolute;
+	top: 0;
+	text-align: center;
+}
+
+#speedButton {
+	position: absolute;
+	bottom: 16px;
+	left: 16px;
+}
+
+#pauseButton {
+	position: absolute;
+	bottom: 16px;
+	right: 16px;
+}
+
+.gameOverWindow {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.popup {
+	min-width: 300px;
+	min-height: 150px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	padding: 1rem;
+	text-align: center;
+	background: #000;
+	color: white;
+	border-radius: 2rem;
 }
