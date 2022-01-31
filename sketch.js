@@ -446,7 +446,7 @@ function setup() {
 				random(height / 3, (2 * height) / 3),
 				random(200, 300),
 				30,
-				random(0, 180),
+				random(0, 360),
 				COLORS[i],
 				SUPPORTED_PLANES[i],
 				i === 3
