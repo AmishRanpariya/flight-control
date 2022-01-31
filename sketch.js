@@ -28,11 +28,11 @@ function findProjection(pos, a, b) {
 const PLANE_TYPES = [
 	{
 		speed: 1,
-		radius: 35,
+		radius: 30,
 	},
 	{
 		speed: 0.75,
-		radius: 30,
+		radius: 28,
 	},
 	{
 		speed: 0.5,
