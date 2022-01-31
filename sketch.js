@@ -3,9 +3,10 @@ const scoreSpan = document.querySelector("#score");
 let planes = [];
 let airports = [];
 
-let heli, heliWing, helipad;
+let heli, heliShadow, heliWing, helipad, airport1;
 let img1, img2, img3, img4, img5, img6;
 let img1Gray, img2Gray, img3Gray, img4Gray, img5Gray, img6Gray;
+let img1Shadow, img2Shadow, img3Shadow, img4Shadow, img5Shadow, img6Shadow;
 let sound;
 
 let speedFactor = 1;
@@ -25,6 +26,8 @@ function findProjection(pos, a, b) {
 	v2.add(pos);
 	return v2;
 }
+
+let AIRPORT_TYPE;
 
 const PLANE_TYPES = [
 	{
@@ -338,6 +341,13 @@ class Plane {
 		imageMode(CENTER);
 
 		if (this.imgs.heli) {
+			image(
+				this.imgs.shadow,
+				this.radius * 0.7 * sin(this.vel.heading() + 120),
+				this.radius * 0.7 * cos(this.vel.heading() + 120),
+				this.radius * 1.8,
+				this.radius * 1.8
+			);
 			image(this.imgs.heli, 0, 0, this.radius * 1.8, this.radius * 1.8);
 			push();
 			rotate(frameCount * 10);
@@ -345,8 +355,22 @@ class Plane {
 			pop();
 		} else {
 			if (this.isHavePathToAirport) {
+				image(
+					this.imgs.shadow,
+					this.radius * 0.7 * sin(this.vel.heading() + 120),
+					this.radius * 0.7 * cos(this.vel.heading() + 120),
+					this.radius * 1.8,
+					this.radius * 1.8
+				); //shadow
 				image(this.imgs.gray, 0, 0, this.radius * 1.8, this.radius * 1.8);
 			} else {
+				image(
+					this.imgs.shadow,
+					this.radius * 0.7 * sin(this.vel.heading() + 120),
+					this.radius * 0.7 * cos(this.vel.heading() + 120),
+					this.radius * 1.8,
+					this.radius * 1.8
+				); //shadow
 				image(this.imgs.color, 0, 0, this.radius * 1.8, this.radius * 1.8);
 			}
 		}
@@ -392,30 +416,39 @@ function averageVector(arr) {
 function preload() {
 	helipad = loadImage("./helipad.jpg");
 	heli = loadImage("./helicopter.png");
+	heliShadow = loadImage("./helicopter.png");
 	heliWing = loadImage("./helicopter_wings.png");
 	img1 = loadImage("./plane-yellow.svg");
 	img1Gray = loadImage("./plane-yellow.svg");
+	img1Shadow = loadImage("./plane-yellow.svg");
 	img2 = loadImage("./super-plane-yellow.svg");
 	img2Gray = loadImage("./super-plane-yellow.svg");
+	img2Shadow = loadImage("./super-plane-yellow.svg");
 	img3 = loadImage("./plane-green.svg");
 	img3Gray = loadImage("./plane-green.svg");
+	img3Shadow = loadImage("./plane-green.svg");
 	img4 = loadImage("./super-plane-green.svg");
 	img4Gray = loadImage("./super-plane-green.svg");
+	img4Shadow = loadImage("./super-plane-green.svg");
 	img5 = loadImage("./plane-pink.svg");
 	img5Gray = loadImage("./plane-pink.svg");
+	img5Shadow = loadImage("./plane-pink.svg");
 	img6 = loadImage("./super-plane-pink.svg");
 	img6Gray = loadImage("./super-plane-pink.svg");
+	img6Shadow = loadImage("./super-plane-pink.svg");
 	img7 = loadImage("./plane-blue.svg");
 	img7Gray = loadImage("./plane-blue.svg");
+	img7Shadow = loadImage("./plane-blue.svg");
 	img8 = loadImage("./super-plane-blue.svg");
 	img8Gray = loadImage("./super-plane-blue.svg");
+	img8Shadow = loadImage("./super-plane-blue.svg");
 	sound = loadSound("./Assets/sound2.wav");
+	airport1 = loadImage("./Assets/airport1.svg");
 }
 
 /////////////////////////////////////////////////////////////////////////////////
-let canvas;
 function setup() {
-	canvas = createCanvas(windowWidth - 10, windowHeight - 70);
+	createCanvas(windowWidth - 10, windowHeight - 70);
 	angleMode(DEGREES);
 	frameRate(60);
 	img1Gray.filter(GRAY);
@@ -424,32 +457,86 @@ function setup() {
 	img4Gray.filter(GRAY);
 	img5Gray.filter(GRAY);
 	img6Gray.filter(GRAY);
-	const SUPPORTED_PLANES = [
-		[
-			{ color: img1, gray: img1Gray },
-			{ color: img2, gray: img2Gray },
-		],
-		[
-			{ color: img3, gray: img3Gray },
-			{ color: img4, gray: img4Gray },
-		],
-		[
-			{ color: img5, gray: img5Gray },
-			{ color: img6, gray: img6Gray },
-		],
-		[{ heli: heli, wing: heliWing }],
+
+	img1Shadow.filter(BLUR, 4);
+	img2Shadow.filter(BLUR, 4);
+	img3Shadow.filter(BLUR, 4);
+	img4Shadow.filter(BLUR, 4);
+	img5Shadow.filter(BLUR, 4);
+	img6Shadow.filter(BLUR, 4);
+	heliShadow.filter(BLUR, 4);
+	img1Shadow.filter(THRESHOLD, 1);
+	img2Shadow.filter(THRESHOLD, 1);
+	img3Shadow.filter(THRESHOLD, 1);
+	img4Shadow.filter(THRESHOLD, 1);
+	img5Shadow.filter(THRESHOLD, 1);
+	img6Shadow.filter(THRESHOLD, 1);
+	heliShadow.filter(THRESHOLD, 1);
+
+	let AIRPORT_TYPE = [
+		{
+			x: width / 2 + 50,
+			y: height / 2 - 150,
+			w: 280,
+			h: 30,
+			angle: 101,
+			color: "#FFDD09",
+			isHelipad: false,
+			supportedPlanes: [
+				{ color: img1, gray: img1Gray, shadow: img1Shadow },
+				{ color: img2, gray: img2Gray, shadow: img2Shadow },
+			],
+		},
+		{
+			x: width / 2 - 120,
+			y: height / 2 + 100,
+			w: 240,
+			h: 30,
+			angle: 340,
+			color: "#62FCB1",
+			isHelipad: false,
+			supportedPlanes: [
+				{ color: img3, gray: img3Gray, shadow: img3Shadow },
+				{ color: img4, gray: img4Gray, shadow: img4Shadow },
+			],
+		},
+		{
+			x: width / 2 - 10,
+			y: height / 2 - 160,
+			w: 210,
+			h: 30,
+			angle: 101,
+			color: "#F23557",
+			isHelipad: false,
+			supportedPlanes: [
+				{ color: img5, gray: img5Gray, shadow: img5Shadow },
+				{ color: img6, gray: img6Gray, shadow: img6Shadow },
+			],
+		},
+		{
+			x: width / 2 + 70,
+			y: height / 2 + 100,
+			w: 30,
+			h: 30,
+			angle: 10,
+			color: "#ffffff",
+			isHelipad: true,
+			supportedPlanes: [{ heli: heli, wing: heliWing, shadow: heliShadow }],
+		},
 	];
+
 	for (let i = 0; i < 4; i++) {
+		let a = AIRPORT_TYPE[i];
 		airports.push(
 			new Airport(
-				random(width / 3, (2 * width) / 3),
-				random(height / 3, (2 * height) / 3),
-				random(200, 300),
-				30,
-				random(0, 360),
-				COLORS[i],
-				SUPPORTED_PLANES[i],
-				i === 3
+				a.x,
+				a.y,
+				a.w,
+				a.h,
+				a.angle,
+				a.color,
+				a.supportedPlanes,
+				a.isHelipad
 			)
 		);
 	}
@@ -472,7 +559,9 @@ function setup() {
 
 function draw() {
 	// background("#A8DDA8"); //white background
-	canvas.clear();
+	clear();
+	imageMode(CENTER);
+	image(airport1, width / 2 - 4, height / 2 - 14, 400, 400);
 	for (let airport of airports) {
 		airport.drawRunway();
 	}
