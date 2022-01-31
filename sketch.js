@@ -412,7 +412,7 @@ function preload() {
 /////////////////////////////////////////////////////////////////////////////////
 let canvas;
 function setup() {
-	canvas = createCanvas(windowWidth - 100, windowHeight - 120);
+	canvas = createCanvas(windowWidth - 40, windowHeight - 80);
 	angleMode(DEGREES);
 	frameRate(60);
 	img1Gray.filter(GRAY);
@@ -511,7 +511,6 @@ function draw() {
 				if (planeA.isCollided(planeB)) {
 					console.log("Game Over");
 					gameOverWindow.style.display = "flex";
-
 					noLoop();
 					break;
 				}

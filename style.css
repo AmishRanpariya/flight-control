@@ -7,8 +7,8 @@ body {
 }
 canvas {
 	display: block;
-	margin: 50px;
-	border-radius: 2rem;
+	margin: 20px;
+	border-radius: 1rem;
 	background: url("./Assets/tile_05.png");
 	background-size: 50px;
 }
@@ -16,30 +16,32 @@ canvas {
 .button {
 	display: block;
 	background: none;
-	padding: 6px 18px;
+	padding: 6px 16px;
 	border: none;
 	outline: none;
 	color: white;
 	border-radius: 1000px;
 }
+
 .score {
 	color: white;
 	width: 100%;
 	position: absolute;
-	top: 0;
+	top: 1rem;
+	font-size: 1.2rem;
 	text-align: center;
 }
 
 #speedButton {
 	position: absolute;
-	bottom: 16px;
-	left: 16px;
+	bottom: 5px;
+	left: 5px;
 }
 
 #pauseButton {
 	position: absolute;
-	bottom: 16px;
-	right: 16px;
+	bottom: 5px;
+	right: 5px;
 }
 
 .gameOverWindow {
@@ -64,5 +66,5 @@ canvas {
 	text-align: center;
 	background: #000;
 	color: white;
-	border-radius: 2rem;
+	border-radius: 1rem;
 }
