@@ -6,6 +6,7 @@ let airports = [];
 let heli, heliWing, helipad;
 let img1, img2, img3, img4, img5, img6;
 let img1Gray, img2Gray, img3Gray, img4Gray, img5Gray, img6Gray;
+let sound;
 
 let speedFactor = 1;
 let score = 0;
@@ -275,8 +276,9 @@ class Plane {
 
 	isCollidingWith(planeB) {
 		let d = p5.Vector.dist(this.pos, planeB.pos);
-		if (d <= this.radius + planeB.radius + 30) {
+		if (d <= this.radius + planeB.radius + 60) {
 			this.isInDanger = true;
+			sound.isPlaying() || sound.play();
 			return false;
 		}
 	}
@@ -407,6 +409,7 @@ function preload() {
 	img7Gray = loadImage("./plane-blue.svg");
 	img8 = loadImage("./super-plane-blue.svg");
 	img8Gray = loadImage("./super-plane-blue.svg");
+	sound = loadSound("./Assets/sound2.wav");
 }
 
 /////////////////////////////////////////////////////////////////////////////////
