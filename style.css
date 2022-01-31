@@ -4,13 +4,14 @@ body {
 	padding: 0;
 	background: rgb(0, 0, 0);
 	overscroll-behavior-y: none;
+	box-sizing: border-box;
 }
 canvas {
 	display: block;
-	margin: 20px;
-	border-radius: 1rem;
+	margin: 5px;
+	border-radius: 0.5rem;
 	background: url("./Assets/tile_05.png");
-	background-size: 50px;
+	background-size: 7vmin;
 }
 
 .button {
@@ -27,7 +28,7 @@ canvas {
 	color: white;
 	width: 100%;
 	position: absolute;
-	top: 1rem;
+	top: 0;
 	font-size: 1.2rem;
 	text-align: center;
 }
