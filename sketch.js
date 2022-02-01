@@ -13,7 +13,7 @@ let speedFactor = 1;
 let score = 0;
 let isPaused = false;
 const WALL_DISTANCE = 30; //distance from window boundary to make plane comeback to window
-const SMOOTH_FACTOR = 4; //to smooth the path
+const SMOOTH_FACTOR = 2; //to smooth the path
 
 const COLORS = ["#FFDD09", "#62FCB1", "#F23557", "#ffffff"];
 
@@ -159,7 +159,7 @@ class Plane {
 		this.vel = createVector(0, 0);
 		this.acc = p5.Vector.random2D(); // createVector(0, 0);
 		this.maxSpeed = maxSpeed;
-		this.maxForce = 0.2;
+		this.maxForce = 0.1;
 		this.radius = radius;
 		this.isLanded = false;
 		this.isLanding = false;
@@ -345,8 +345,8 @@ class Plane {
 				this.imgs.shadow,
 				this.radius * 0.7 * sin(this.vel.heading() + 120),
 				this.radius * 0.7 * cos(this.vel.heading() + 120),
-				this.radius * 1.8,
-				this.radius * 1.8
+				this.radius * 1.5,
+				this.radius * 1.5
 			);
 			image(this.imgs.heli, 0, 0, this.radius * 1.8, this.radius * 1.8);
 			push();
@@ -359,8 +359,8 @@ class Plane {
 					this.imgs.shadow,
 					this.radius * 0.7 * sin(this.vel.heading() + 120),
 					this.radius * 0.7 * cos(this.vel.heading() + 120),
-					this.radius * 1.8,
-					this.radius * 1.8
+					this.radius * 1.5,
+					this.radius * 1.5
 				); //shadow
 				image(this.imgs.gray, 0, 0, this.radius * 1.8, this.radius * 1.8);
 			} else {
@@ -368,8 +368,8 @@ class Plane {
 					this.imgs.shadow,
 					this.radius * 0.7 * sin(this.vel.heading() + 120),
 					this.radius * 0.7 * cos(this.vel.heading() + 120),
-					this.radius * 1.8,
-					this.radius * 1.8
+					this.radius * 1.5,
+					this.radius * 1.5
 				); //shadow
 				image(this.imgs.color, 0, 0, this.radius * 1.8, this.radius * 1.8);
 			}
@@ -443,7 +443,8 @@ function preload() {
 	img8Gray = loadImage("./super-plane-blue.svg");
 	img8Shadow = loadImage("./super-plane-blue.svg");
 	sound = loadSound("./Assets/sound2.wav");
-	airport1 = loadImage("./Assets/airport1.svg");
+	// airport1 = loadImage("./Assets/greenAirport.svg");
+	airport1 = loadImage("./Assets/greenAirportWithLand.svg");
 }
 
 /////////////////////////////////////////////////////////////////////////////////
